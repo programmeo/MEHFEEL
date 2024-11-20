@@ -1,5 +1,7 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
@@ -9,7 +11,7 @@ const server = http.createServer(app);
 //import socket and give get req (server)
 const io = require('socket.io')(server, {
     connectionStateRecovery: {}
-  });
+});
 
 app.use(express.static('public'))
 app.use(express.static('views'))
@@ -24,6 +26,25 @@ app.get('/:roomName', (req, res) => {
     const roomName = req.params.roomName
     res.render('room', { roomName })
 })
+
+//Endpoint to fetch song from Song Folder
+app.get('/api/songs', (req, res) => {
+    const songsFolderPath = path.join(__dirname, 'Song'); // Folder containing your songs
+
+    // Read all files in the 'songs' folder (only .mp3 files, for example)
+    fs.readdir(songsFolderPath, (err, files) => {
+        if (err) {
+            res.status(500).send('Error reading songs folder');
+            return;
+        }
+
+        // Filter the files to include only .mp3 files (you can adjust the extension as needed)
+        const songs = files.filter(file => file.endsWith('.mp3'));
+
+        // Send the list of songs as JSON
+        res.json(songs);
+    });
+});
 
 //listen for Socket Connection
 
@@ -46,14 +67,14 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(`${socket.handshake.query.name} disconnected`);
     });
-    
-    
+
+
 });
 
 // server.listen(port, () => {
 //     console.log(`Server is running at http://localhost:${port}`);
 // });
 
-server.listen(port,'192.168.1.10', ()=>{
+server.listen(port, '192.168.1.10', () => {
     console.log(`server listen at http://192.168.1.10:${port}`);
 });
