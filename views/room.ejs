@@ -25,7 +25,7 @@
                     <span class="logo-text d-flex align-items-center text-fill glow-text">
                         <%=roomName%>
                     </span>
-                    <span><img class="glow-svg" src="/img/search.svg" alt="menu-list"></span>
+                    <span><img class="glow-svg search" src="/img/search.svg" alt="menu-list"></span>
                 </div>
             </nav>
         </header>
@@ -36,6 +36,22 @@
         </div>
 
         <div class="song-chat d-flex flex-column gap-3 justify-content-center align-items-center m-2 glow-svg">
+
+            <!-- Serch Section For Search Song -->
+            <div class="searchsec position-absolute d-flex flex-column gap-3 p-3">
+                <div class="search-input d-flex">
+                    <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1"
+                        onkeyup="searchItems()">
+                    <img src="img/search.svg" alt="">
+                </div>
+                <div class="song-list text-white">
+                    <ul class="itemsList list-unstyled m-3 d-flex flex-column gap-1">
+                        <!-- List Of songs Fetch From the server -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- playbar container song info and buttons -->
             <div class="play-container">
                 <div class="song-info d-flex flex-column align-items-center justify-content-between">
                     <span class="song-name">Lorem ipsum dolor sit amet consectetur jnkjshj askjhkjads.</span>
@@ -79,7 +95,6 @@
                     <div class="msg-input">
                         <div class="input-container d-flex justify-content-between align-items-center">
                             <input type="text" placeholder="Type Your Message Here..." class="flex-grow-1">
-                            <img class="sendbtn" onclick="javascript:SendMessage()" src="/img/send.svg" alt="">
                         </div>
                     </div>
                 </div>
@@ -110,12 +125,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>`
         });
-        
+
         // user name alert display for joining room
         if (usrname) {
             document.querySelector(".alertclass").setAttribute('style', "visibility: visible;")
         }
-        
+
 
         // Message sendind logic and design
         let ChatContainer = document.querySelector(".chat-container")
@@ -132,7 +147,7 @@
                 SendBtn.click();
             }
         });
-        
+
         // send message function for logic and ux
         function SendMessage() {
             let ChatMasssage = document.createElement('div');
@@ -160,8 +175,65 @@
             ChatContainer.scrollTop = ChatContainer.scrollHeight;
         })
 
+        // Function to fetch songs from the server
+        async function fetchSongs() {
+            try {
+                const response = await fetch('/api/songs');
+                const songs = await response.json();
+                return songs;
+            } catch (error) {
+                console.error('Error fetching songs:', error);
+                return [];
+            }
+        }
 
-        console.log(ChatContainer);
+        // Add songs to the search list
+        const songList = document.querySelector(".song-list>ul");
+
+        async function loadSongs() {
+            const songs = await fetchSongs();
+            songs.forEach(song => {
+                songList.innerHTML += `
+            <li>
+                <div class="song-card d-flex w-50 gap-lg-4 align-items-center">
+                    <img class="song-card-image" src="/img/music_disc.png" alt="">
+                    <div class="flex-grow-1">
+                        <span class="song-name">${song}</span>
+                    </div>
+                    <img class="heart" src="/img/heart.svg" alt="">
+                </div>
+            </li>`;
+            });
+        }
+
+        // Filter out songs from the list by input
+        function searchItems() {
+            let input = document.getElementById('search-input');
+            let filter = input.value.toLowerCase();
+            let itemsList = document.querySelector('.itemsList');
+            let items = itemsList.getElementsByTagName('li');
+
+            // Loop through all list items and hide those who don't match the search query
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                let songName = item.querySelector('.song-name').textContent || item.querySelector('.song-name').innerText;
+
+                if (songName.toLowerCase().indexOf(filter) > -1) {
+                    item.style.display = ''; // Show item
+                } else {
+                    item.style.display = 'none'; // Hide item
+                }
+            }
+        }
+
+        // Load the songs when the page loads
+        window.onload = loadSongs;
+
+
+
+
+
+        console.log('Script is running...');
 
     </script>
 </body>

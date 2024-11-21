@@ -16,6 +16,44 @@
     font-weight: bold;
 }
 
+.search:hover{
+    cursor: pointer;
+}
+
+.searchsec{
+    z-index: 2;
+    width: 80%;
+    height: 80%;
+    top: 0;
+    border-radius: 10px;
+    background-color: rgba(33, 33, 33, 0.8);
+}
+
+.song-list{
+    overflow-y: scroll;
+}
+
+#search-input:focus{
+    outline: none;
+    padding: 10px;
+    transition: padding 0.1s linear;
+}
+
+.song-card{
+    background-color: #1a1a1a;
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.song-card-image{
+    width: 35px;
+    height: 35px;
+}
+
+.heart{
+    fill: white;
+}
+
 .play-container {
     background: var(--theme);
     width: 85vw;
@@ -64,7 +102,7 @@
     width: 0.4rem;
     border-radius: 100%;
     z-index: 1;
-    left: 0%;
+    left: 50%;
     transition:left 2s linear;
     background-color: black;
 }
