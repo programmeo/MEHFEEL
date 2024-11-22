@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const multer = require("multer")
 
 const app = express();
 const port = 3000;
@@ -46,8 +47,15 @@ app.get('/api/songs', (req, res) => {
     });
 });
 
-//listen for Socket Connection
+//post request for file upload
+app.post("/upload", UploadSong.single('file'), (req, res)=>{
+    if(!req.file){
+        return res.status(400).send('No file Uploaded')
+    }
+    res.send(`File Uploded: ${req.file.filename}`)
+})
 
+//listen for Socket Connection
 io.on('connection', (socket) => {
     console.log(`${socket.handshake.query.name} connected`);
 
@@ -67,9 +75,30 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(`${socket.handshake.query.name} disconnected`);
     });
-
-
 });
+
+//upload song to the upload forlder
+const SongStorage = multer.diskStorage({
+    destination: (req,res,cb)=>{
+        cb(null, 'Upload/')
+    },
+    filename: (req,res,cb)=>{
+        cb(null, file.originalname + Date.now())
+    }
+})
+
+//creat multer instance and set limit to only 10MB and Only mp3 File allowed
+const UploadSong = multer({
+    storage: SongStorage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: function (req, file, cb) {
+        if (file.mimetype === 'audio/mp3') {
+          cb(null, true);  // Accept the file
+        } else {
+          cb(new Error('Only mp3 files are allowed'), false);  // Reject the file
+        }
+      }
+})
 
 // server.listen(port, () => {
 //     console.log(`Server is running at http://localhost:${port}`);
