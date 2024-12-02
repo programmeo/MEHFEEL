@@ -134,6 +134,12 @@
     border-radius: 10px;
 }
 
+.block{
+    max-width: 50%;
+    word-break: break-all;
+    float: left;
+}
+
 .alertclass{
     position: absolute;
     z-index: 1;
