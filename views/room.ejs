@@ -18,10 +18,10 @@
         <header>
             <nav class="navbar opacity-100">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="#">
-                        <img class="glow-svg" src="/img/music-list.svg" alt="Logo"
+                    <span class="navbar-brand">
+                        <img class="glow-svg playlist" src="/img/music-list.svg" alt="Logo"
                             class="d-inline-block align-text-top">
-                    </a>
+                    </span>
                     <span class="logo-text d-flex align-items-center text-fill glow-text">
                         <%=roomName%>
                     </span>
@@ -37,34 +37,54 @@
 
         <div class="song-chat d-flex flex-column gap-3 justify-content-center align-items-center m-2 glow-svg">
 
+            <!-- Playlist section for individual room -->
+            <div class="playlist-sec position-absolute d-flex flex-column gap-3 p-3 hidden">
+                <div class="play-list text-white d-flex">
+                    <ul class="user-song list-unstyled m-3 d-flex flex-column gap-1 flex-grow-1">
+
+                    </ul>
+                </div>
+            </div>
+
             <!-- Serch Section For Search Song -->
-            <div class="searchsec position-absolute d-flex flex-column gap-3 p-3">
+            <div class="searchsec position-absolute d-flex flex-column gap-3 p-3 hidden">
                 <div class="search-input d-flex">
-                    <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1"
-                        onkeyup="searchItems()">
+                    <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1" placeholder="Search Song"
+                        onkeyup="searchSong()">
                     <img src="img/search.svg" alt="">
                 </div>
-                <div class="song-list text-white">
-                    <ul class="itemsList list-unstyled m-3 d-flex flex-column gap-1">
+                <div class="song-list text-white d-flex">
+                    <ul id="songlist" class="itemsList list-unstyled m-3 d-flex flex-column gap-1 flex-grow-1">
+                        Search songs are Here
                         <!-- List Of songs Fetch From the server -->
                     </ul>
+
+                    <!-- define multer here -->
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <input class="form-control" type="file" id="formFile" name="file" required>
+                        <button class="btn btn-primary" type="submit">Upload File</button>
+                        <div id="statusMessage"></div>
+                    </form>
+
                 </div>
             </div>
 
             <!-- playbar container song info and buttons -->
             <div class="play-container">
                 <div class="song-info d-flex flex-column align-items-center justify-content-between">
-                    <span class="song-name">Lorem ipsum dolor sit amet consectetur jnkjshj askjhkjads.</span>
-                    <span class="song-channel">Helloguys</span>
+                    <span class="song-name">Add Songs From The Search</span>
+                    <span class="song-channel">
+                        <%= roomName %> MEHFEEL
+                    </span>
                     <div class="seek-container d-flex flex-column gap-1">
                         <div class="seek-time d-flex justify-content-between">
                             <span class="currunt-time">00:00</span>
-                            <span class="duration">04:00</span>
+                            <span class="duration">00:00</span>
                         </div>
                         <div class="seekbar">
                             <div class="line">
-                                <div class="dot"></div>
                             </div>
+                            <div class="dot"></div>
                         </div>
                     </div>
                     <div class="controls d-flex gap-5">
@@ -72,7 +92,7 @@
                             <img class="size" src="/img/previous.svg" alt="previous">
                         </span>
                         <span class="play">
-                            <img class="size" src="/img/play.svg" alt="play">
+                            <img class="song-play size" src="/img/play.svg" alt="play">
                         </span>
                         <span class="next">
                             <img class="size" src="/img/next.svg" alt="next">
@@ -111,6 +131,7 @@
         crossorigin="anonymous"></script>
     <!-- <script src="/js/client-side.js"></script> -->
     <script>
+        const audiolib = new Audio()
         const usrname = 'yash' //prompt("Enter Your Name")
 
         //connection for socket connection and send username to the server
@@ -175,62 +196,264 @@
             ChatContainer.scrollTop = ChatContainer.scrollHeight;
         })
 
-        // Function to fetch songs from the server
-        async function fetchSongs() {
-            try {
-                const response = await fetch('/api/songs');
-                const songs = await response.json();
-                return songs;
-            } catch (error) {
-                console.error('Error fetching songs:', error);
-                return [];
+        //STREM SONG
+        //function for play song
+        const playMusic = (track) => {
+            const songName = track;
+
+            fetch('/playSong', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ songName: songName }), // Send song name in the request body
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch the song');
+                    } else {
+                        return response.blob(); // Get the song as a Blob
+                    }
+                })
+                .then(blob => {
+                    const audioURL = URL.createObjectURL(blob);
+                    console.log(audioURL); //debugline
+                    audiolib.src = audioURL;  // Set the audio source to the Blob URL
+                    audiolib.play();          // Play the song
+                })
+                .catch(error => {
+                    console.error('Error fetching the song:', error);
+                    alert('Failed to play the song');
+                });
+        }
+
+        //UPLOAD SONG: fetch uplload song detail
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent form from refreshing the page
+
+            const fileInput = document.getElementById('formFile');
+            const file = fileInput.files[0]; // Get the selected file
+
+            if (!file) {
+                document.getElementById('statusMessage').innerText = 'Please select a file.';
+                return;
             }
+
+            const formData = new FormData();
+            formData.append('file', file); // Append the file to FormData
+
+            // Send the file to the server
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('statusMessage').innerText = data.songs || 'File uploaded successfully!';
+                    playlistarr.push(data.songs)
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('statusMessage').innerText = 'File upload failed.';
+                });
+        });
+
+
+
+        //NEW LOGIC: SEARCH QUERY SEND TO SERVER
+        function searchSong() {
+            const query = document.getElementById('search-input').value;
+            if (query.length < 2 || query.length == 0) { // Don't send a request for very short queries
+                document.getElementById('songlist').textContent = 'Loading...'
+                return;
+            }
+
+            // Send the query to the backend to search for matching songs
+            fetch(`/api/searchSongs?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching search results:', error);
+                    document.getElementById('songlist').innerHTML = 'Error loading songs.';
+                });
         }
 
-        // Add songs to the search list
-        const songList = document.querySelector(".song-list>ul");
 
-        async function loadSongs() {
-            const songs = await fetchSongs();
-            songs.forEach(song => {
-                songList.innerHTML += `
-            <li>
-                <div class="song-card d-flex w-50 gap-lg-4 align-items-center">
-                    <img class="song-card-image" src="/img/music_disc.png" alt="">
-                    <div class="flex-grow-1">
-                        <span class="song-name">${song}</span>
-                    </div>
-                    <img class="heart" src="/img/heart.svg" alt="">
-                </div>
-            </li>`;
-            });
-        }
+        //DISPLAY DATA
+        let playlistarr = [] //PlayList of songs
+        let curruntSong = ''
 
-        // Filter out songs from the list by input
-        function searchItems() {
-            let input = document.getElementById('search-input');
-            let filter = input.value.toLowerCase();
-            let itemsList = document.querySelector('.itemsList');
-            let items = itemsList.getElementsByTagName('li');
+        function displayResults(data) {
+            const ul = document.getElementById('songlist');
+            let toggle = false;
+            ul.innerHTML = ''; // Clear previous results
 
-            // Loop through all list items and hide those who don't match the search query
-            for (let i = 0; i < items.length; i++) {
-                let item = items[i];
-                let songName = item.querySelector('.song-name').textContent || item.querySelector('.song-name').innerText;
+            if (data && data.songs && data.songs.length > 0) {
+                data.songs.forEach(song => {
+                    const li = document.createElement('li');
+                    li.setAttribute('id', 'song')
+                    li.innerHTML = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${song.name}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
+                    ul.appendChild(li);
+                    toggle = true
+                });
+            } else {
+                ul.innerHTML = 'No songs found';
+                toggle = false
+            }
 
-                if (songName.toLowerCase().indexOf(filter) > -1) {
-                    item.style.display = ''; // Show item
-                } else {
-                    item.style.display = 'none'; // Hide item
+            //if song-card click add to the playlist
+            if (toggle) {
+
+                //add song to the playlist array
+                document.querySelectorAll('#songlist>li').forEach(songs => {
+                    songs.addEventListener('click', (e) => {
+                        e.preventDefault()
+                        if (!playlistarr.includes(songs.textContent)) {
+                            playlistarr.push(songs.textContent)
+                            console.log(playlistarr);//debugline
+                        }
+
+                        //add songs to the playlist section
+                        const UserSong = document.querySelector('.user-song')
+                        if (!(playlistarr.length <= 0)) {
+                            UserSong.innerHTML = ' '
+                            playlistarr.forEach(songs => {
+                                if (!(UserSong.innerText).includes(songs)) {
+                                    const li = document.createElement('li')
+                                    li.setAttribute('id', 'song')
+                                    li.innerHTML = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${songs}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
+                                    UserSong.appendChild(li)
+                                }
+                            })
+                            //add event loster to play song from the playlist
+                            const UserSongLi = document.querySelectorAll('.user-song>li')
+                            UserSongLi.forEach(songs => {
+                                songs.addEventListener('click', () => {
+                                    PlaySongCard(songs)
+                                })
+                            })
+
+                        }
+                    })
+                })
+
+                //load song
+                const songCard = document.querySelectorAll('#song')
+                if (songCard) {
+                    songCard.forEach(songs => {
+                        songs.addEventListener('click', (e) => {
+                            e.preventDefault()
+                            PlaySongCard(songs)
+                        })
+                    })
                 }
+
             }
         }
 
-        // Load the songs when the page loads
-        window.onload = loadSongs;
+        //function for play song from songcard
+        function PlaySongCard(songs) {
+            playMusic(songs.textContent)
+            songs.querySelector('.playmusic').src = '/img/pause.svg'
+            SongPlay.src = '/img/pause.svg'
+            UpdatePlaybar(songs.textContent)
+            document.querySelectorAll('.playmusic').forEach(li => {
+                if (!(songs.textContent === li.parentElement.textContent)) {
+                    li.src = '/img/play.svg'
+                }
+            })
+            document.querySelectorAll('.user-song>li').forEach(li => {
+                if (!(songs.textContent === li.parentElement.textContent)) {
+                    li.src = '/img/play.svg'
+                }else{
+                    li.src = '/img/pause.svg'
+                }
+            })
+        }
+
+        //function for update song name and duration in playbar
+        function UpdatePlaybar(songname) {
+            const SongName = document.querySelector('.song-info>.song-name')
+            const Duration = document.querySelector('.seek-time>.duration')
+            SongName.textContent = songname
+            Duration.textContent = secondsToMinutesSeconds(audiolib.duration)
+        }
 
 
+        //function 
+        function secondsToMinutesSeconds(seconds) {
+            if (isNaN(seconds) || seconds < 0) {
+                return "00:00";
+            }
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(remainingSeconds).padStart(2, '0')
+            return `${formattedMinutes}:${formattedSeconds}`;
+        }
 
+
+        //evnet listeners for ui
+
+        //play pause controller for song
+        const SongPlay = document.querySelector('.song-play')
+        SongPlay.addEventListener('click', () => {
+            PlayPause()
+        })
+
+        function PlayPause() {
+            if (audiolib.paused) {
+                audiolib.play()
+                SongPlay.src = '/img/pause.svg'
+            }
+            else {
+                audiolib.pause()
+                SongPlay.src = '/img/play.svg'
+            }
+        }
+
+        //next button eventlistener
+        const NextBtn = document.querySelector('.next')
+        const PrevBtn = document.querySelector('.prev')
+        let currentIndex = 0; //Tracks the current song index
+
+        function CurrentSong() {
+            playMusic(playlistarr[currentIndex])
+            UpdatePlaybar(playlistarr[currentIndex])
+        }
+
+        NextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % playlistarr.length; // Circular navigation
+            console.log(curruntSong);//debugline
+            CurrentSong();
+        })
+
+        PrevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + playlistarr.length) % playlistarr.length; // Circular navigation
+            CurrentSong();
+
+        })
+
+        //search eventlistener
+        const SearchSvg = document.querySelector(".search")
+        const SearchSec = document.querySelector(".searchsec")
+        SearchSvg.addEventListener("click", () => {
+            SearchSec.classList.toggle('hidden');
+            PlayList.classList.add('hidden')
+            document.getElementById('search-input').value = ''
+            document.getElementById('songlist').textContent = 'Search Songs Are here'
+        })
+
+        //playlist eventlistener
+        const MusicSvg = document.querySelector(".playlist")
+        const PlayList = document.querySelector(".playlist-sec")
+        MusicSvg.addEventListener("click", () => {
+            PlayList.classList.toggle('hidden');
+            SearchSec.classList.add('hidden')
+            console.log("Playlist clicked"); //debug line
+        })
 
 
         console.log('Script is running...');
