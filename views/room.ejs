@@ -49,8 +49,8 @@
             <!-- Serch Section For Search Song -->
             <div class="searchsec position-absolute d-flex flex-column gap-3 p-3 hidden">
                 <div class="search-input d-flex">
-                    <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1" placeholder="Search Song"
-                        onkeyup="searchSong()">
+                    <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1"
+                        placeholder="Search Song" onkeyup="searchSong()">
                     <img src="img/search.svg" alt="">
                 </div>
                 <div class="song-list text-white d-flex">
@@ -83,8 +83,8 @@
                         </div>
                         <div class="seekbar">
                             <div class="line">
+                                <div class="dot"></div>
                             </div>
-                            <div class="dot"></div>
                         </div>
                     </div>
                     <div class="controls d-flex gap-5">
@@ -195,6 +195,8 @@
             //make scroll at the end on every click
             ChatContainer.scrollTop = ChatContainer.scrollHeight;
         })
+
+
 
         //STREM SONG
         //function for play song
@@ -331,7 +333,8 @@
                             const UserSongLi = document.querySelectorAll('.user-song>li')
                             UserSongLi.forEach(songs => {
                                 songs.addEventListener('click', () => {
-                                    PlaySongCard(songs)
+                                    // PlaySongCard(songs.textContent)
+                                    socket.emit('play', songs.textContent, '<%=roomName%>')
                                 })
                             })
 
@@ -345,30 +348,52 @@
                     songCard.forEach(songs => {
                         songs.addEventListener('click', (e) => {
                             e.preventDefault()
-                            PlaySongCard(songs)
+                            console.log(songs);//debug line
+                            // PlaySongCard(songs)
+                            socket.emit('play', songs.textContent, '<%=roomName%>')
                         })
                     })
                 }
-
             }
+        }
+
+        //listen on for play
+        socket.on('playmusic', (song) => {
+            console.log(song);//debug line
+            PlaySongCard(song)
+        })
+
+
+        //function for update time duration on playbar
+        function CurruntMusicTime() {
+            const SeekTime = document.querySelector('.currunt-time')
+            const line = document.querySelector('.seekbar>.line')
+            const dot = document.querySelector('.line>.dot')
+            setInterval(() => {
+                SeekTime.textContent = secondsToMinutesSeconds(audiolib.currentTime)
+                dot.style.left = `${(audiolib.currentTime / line.clientWidth) * 100}%`
+                // console.log(audiolib.currentTime) //debug
+            }, 100);
         }
 
         //function for play song from songcard
         function PlaySongCard(songs) {
-            playMusic(songs.textContent)
-            songs.querySelector('.playmusic').src = '/img/pause.svg'
-            SongPlay.src = '/img/pause.svg'
-            UpdatePlaybar(songs.textContent)
+            playMusic(songs)
+            CurruntMusicTime()
+            // songs.querySelector('.playmusic').src = '/img/pause.svg'
+            SongPlay.src = '/img/pause.svg' //debug
+            // PlayPause()
+            UpdatePlaybar(songs)
             document.querySelectorAll('.playmusic').forEach(li => {
-                if (!(songs.textContent === li.parentElement.textContent)) {
+                if (!(songs === li.parentElement.textContent)) {
                     li.src = '/img/play.svg'
+                } else {
+                    li.src = '/img/pause.svg'
                 }
             })
             document.querySelectorAll('.user-song>li').forEach(li => {
-                if (!(songs.textContent === li.parentElement.textContent)) {
-                    li.src = '/img/play.svg'
-                }else{
-                    li.src = '/img/pause.svg'
+                if ((songs === li.textContent)) {
+                    li.querySelector('.playmusic').src = '/img/pause.svg'
                 }
             })
         }
@@ -378,7 +403,7 @@
             const SongName = document.querySelector('.song-info>.song-name')
             const Duration = document.querySelector('.seek-time>.duration')
             SongName.textContent = songname
-            Duration.textContent = secondsToMinutesSeconds(audiolib.duration)
+            // Duration.textContent = secondsToMinutesSeconds(audiolib.duration)
         }
 
 
@@ -400,7 +425,9 @@
         //play pause controller for song
         const SongPlay = document.querySelector('.song-play')
         SongPlay.addEventListener('click', () => {
-            PlayPause()
+            if (playlistarr.length >= 1) {
+                PlayPause()//debug
+            }
         })
 
         function PlayPause() {
@@ -452,7 +479,7 @@
         MusicSvg.addEventListener("click", () => {
             PlayList.classList.toggle('hidden');
             SearchSec.classList.add('hidden')
-            console.log("Playlist clicked"); //debug line
+            // console.log("Playlist clicked"); //debug line
         })
 
 

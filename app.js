@@ -37,10 +37,12 @@ io.on('connection', (socket) => {
         socket.to(roomName).emit('messages', msg); // Broadcast to everyone in the room
     });
 
-    //send playlist data to specific room
-    socket.on('PlayList-Music', (msg, roomName) => {
-        socket.to(roomName).emit('PlayList-Music-send', msg); // Broadcast to everyone in the room
-    });
+    //send play emit to room
+    socket.on('play', (song, roomName)=>{
+        console.log(song);//debug line
+        console.log(roomName);//debug line
+        io.to(roomName).emit('playmusic', song)
+    })
 
     //handling disconnection of client
     socket.on('disconnect', () => {
@@ -159,6 +161,6 @@ app.get('/api/searchSongs', (req, res) => {
     }
 });
 
-server.listen(port, '192.168.1.10', () => {
-    console.log(`server listen at http://192.168.1.10:${port}`);
+server.listen(port, '192.168.1.2', () => {
+    console.log(`server listen at http://192.168.1.2:${port}`);
 });
