@@ -325,7 +325,8 @@
                                 if (!(UserSong.innerText).includes(songs)) {
                                     const li = document.createElement('li')
                                     li.setAttribute('id', 'song')
-                                    li.innerHTML = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${songs}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
+                                    const SongCardHtml = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${songs}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
+                                    li.innerHTML = SongCardHtml
                                     UserSong.appendChild(li)
                                 }
                             })
@@ -378,8 +379,8 @@
 
         //function for play song from songcard
         function PlaySongCard(songs) {
-            playMusic(songs)
             CurruntMusicTime()
+            playMusic(songs)
             // songs.querySelector('.playmusic').src = '/img/pause.svg'
             SongPlay.src = '/img/pause.svg' //debug
             // PlayPause()
@@ -403,7 +404,7 @@
             const SongName = document.querySelector('.song-info>.song-name')
             const Duration = document.querySelector('.seek-time>.duration')
             SongName.textContent = songname
-            // Duration.textContent = secondsToMinutesSeconds(audiolib.duration)
+            Duration.textContent = secondsToMinutesSeconds(audiolib.duration)
         }
 
 
@@ -425,9 +426,16 @@
         //play pause controller for song
         const SongPlay = document.querySelector('.song-play')
         SongPlay.addEventListener('click', () => {
-            if (playlistarr.length >= 1) {
-                PlayPause()//debug
-            }
+            socket.emit('pause', '<%=roomName%>')
+            // if (playlistarr.length >= 1) {
+            //     PlayPause()//debug
+            // }
+        })
+
+        //listen play pause for song
+        socket.on("pausemusic", ()=>{
+            console.log('paused');
+            PlayPause()
         })
 
         function PlayPause() {

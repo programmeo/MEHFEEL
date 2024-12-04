@@ -44,6 +44,12 @@ io.on('connection', (socket) => {
         io.to(roomName).emit('playmusic', song)
     })
 
+    //listen and brodcast play pause for user in room\
+    socket.on('pause', (roomname)=>{
+        console.log("pause");//debug
+        io.to(roomname).emit('pausemusic')
+    })
+
     //handling disconnection of client
     socket.on('disconnect', () => {
         console.log(`${socket.handshake.query.name} disconnected`);
