@@ -50,6 +50,17 @@ io.on('connection', (socket) => {
         io.to(roomname).emit('pausemusic')
     })
 
+    //addmusic to the room playlist
+    socket.on('addmusic', (songs, roomname)=>{
+        console.log(songs);//debug
+        socket.to(roomname).emit('addmusic', songs)
+    })
+
+    //listen for seek position
+    socket.on('seekposition', (msg, progress, roomName)=>{
+        io.to(roomName).emit('seekposition', msg, progress)
+    })
+    
     //handling disconnection of client
     socket.on('disconnect', () => {
         console.log(`${socket.handshake.query.name} disconnected`);
@@ -167,6 +178,6 @@ app.get('/api/searchSongs', (req, res) => {
     }
 });
 
-server.listen(port, '192.168.1.2', () => {
-    console.log(`server listen at http://192.168.1.2:${port}`);
+server.listen(port, '192.168.1.7', () => {
+    console.log(`server listen at http://192.168.1.7:${port}`);
 });

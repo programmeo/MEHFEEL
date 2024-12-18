@@ -51,7 +51,7 @@
                 <div class="search-input d-flex">
                     <input type="text" id="search-input" class="bg-transparent border-0 border-bottom flex-grow-1"
                         placeholder="Search Song" onkeyup="searchSong()">
-                    <img src="img/search.svg" alt="">
+                    <img class="search-inside" src="img/search.svg" alt="">
                 </div>
                 <div class="song-list text-white d-flex">
                     <ul id="songlist" class="itemsList list-unstyled m-3 d-flex flex-column gap-1 flex-grow-1">
@@ -312,36 +312,48 @@
                 document.querySelectorAll('#songlist>li').forEach(songs => {
                     songs.addEventListener('click', (e) => {
                         e.preventDefault()
-                        if (!playlistarr.includes(songs.textContent)) {
-                            playlistarr.push(songs.textContent)
-                            console.log(playlistarr);//debugline
-                        }
-
-                        //add songs to the playlist section
-                        const UserSong = document.querySelector('.user-song')
-                        if (!(playlistarr.length <= 0)) {
-                            UserSong.innerHTML = ' '
-                            playlistarr.forEach(songs => {
-                                if (!(UserSong.innerText).includes(songs)) {
-                                    const li = document.createElement('li')
-                                    li.setAttribute('id', 'song')
-                                    const SongCardHtml = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${songs}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
-                                    li.innerHTML = SongCardHtml
-                                    UserSong.appendChild(li)
-                                }
-                            })
-                            //add event loster to play song from the playlist
-                            const UserSongLi = document.querySelectorAll('.user-song>li')
-                            UserSongLi.forEach(songs => {
-                                songs.addEventListener('click', () => {
-                                    // PlaySongCard(songs.textContent)
-                                    socket.emit('play', songs.textContent, '<%=roomName%>')
-                                })
-                            })
-
-                        }
+                        console.log('songlist clicked');//debug
+                        socket.emit('addmusic', songs.textContent, '<%= roomName %>')
+                        SongPlayListUpdate(songs.textContent)
                     })
                 })
+
+                //listen for songs add playlist
+                socket.on('addmusic', (songs) => {
+                    SongPlayListUpdate(songs)
+                })
+
+                //function for add songs in userplaylist
+                function SongPlayListUpdate(songs) {
+                    if (!playlistarr.includes(songs)) {
+                        playlistarr.push(songs)
+                        console.log(playlistarr);//debugline
+                    }
+
+                    //add songs to the playlist section
+                    const UserSong = document.querySelector('.user-song')
+                    if (!(playlistarr.length <= 0)) {
+                        UserSong.innerHTML = ' '
+                        playlistarr.forEach(songs => {
+                            if (!(UserSong.innerText).includes(songs)) {
+                                const li = document.createElement('li')
+                                li.setAttribute('id', 'song')
+                                const SongCardHtml = `<div class="song-card d-flex w-50 gap-lg-4 align-items-center"><img class="song-card-image" src="/img/music_disc.png" alt=""><div class="flex-grow-1 overflow-scroll"><span class="song-name">${songs}</span></div><img class="playmusic invert" src="/img/play.svg" alt=""></div>`
+                                li.innerHTML = SongCardHtml
+                                UserSong.appendChild(li)
+                            }
+                        })
+                        //add event loster to play song from the playlist
+                        const UserSongLi = document.querySelectorAll('.user-song>li')
+                        UserSongLi.forEach(songs => {
+                            songs.addEventListener('click', () => {
+                                // PlaySongCard(songs.textContent)
+                                socket.emit('play', songs.textContent, '<%=roomName%>')
+                            })
+                        })
+
+                    }
+                }
 
                 //load song
                 const songCard = document.querySelectorAll('#song')
@@ -366,16 +378,77 @@
 
 
         //function for update time duration on playbar
+        const line = document.querySelector('.seekbar>.line')
+        const dot = document.querySelector('.line>.dot')
+        const SeekTime = document.querySelector('.currunt-time')
         function CurruntMusicTime() {
-            const SeekTime = document.querySelector('.currunt-time')
-            const line = document.querySelector('.seekbar>.line')
-            const dot = document.querySelector('.line>.dot')
             setInterval(() => {
                 SeekTime.textContent = secondsToMinutesSeconds(audiolib.currentTime)
-                dot.style.left = `${(audiolib.currentTime / line.clientWidth) * 100}%`
+                dot.style.left = `${(audiolib.currentTime / audiolib.duration) * 100}%`
                 // console.log(audiolib.currentTime) //debug
             }, 100);
         }
+
+        // Variables to track dragging
+        let isDragging = false;
+
+        // Add event listeners for mouse and touch events
+        dot.addEventListener('mousedown', startDragging);
+        dot.addEventListener('touchstart', startDragging);
+
+        document.addEventListener('mouseup', stopDragging);
+        document.addEventListener('touchend', stopDragging);
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove);
+
+        // Function to handle the start of dragging
+        function startDragging(e) {
+            isDragging = true;
+            e.preventDefault(); // Prevent text selection or unwanted scrolling
+        }
+
+        // Function to handle the stop of dragging
+        function stopDragging() {
+            if (isDragging) {
+                isDragging = false;
+            }
+        }
+
+        // Function to handle the movement of the dot
+        function onMove(e) {
+            if (!isDragging) return;
+
+            // Get the correct event (mouse or touch)
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+
+            const containerRect = line.getBoundingClientRect();
+            let newX = clientX - containerRect.left;
+
+            // Ensure the dot stays within bounds
+            newX = Math.max(0, Math.min(newX, containerRect.width));
+
+            // dot.style.left = `${newX}px`;
+
+            
+            // Update the audio current time based on the dot position
+            const progress = newX / containerRect.width;
+            audiolib.currentTime = progress * audiolib.duration;
+            
+            //send data to room
+            socket.emit('seekposition', `${newX}`, progress, `<%=roomName%>`)
+
+            console.log('Mouse move'); //debug line
+        }
+
+        //incoming signal of seek postion from theserver
+        socket.on('seekposition', (msg, progress)=>{
+            console.log(progress);
+            dot.style.left = `${msg}px`
+            // Update the audio current time based on the dot position
+            audiolib.currentTime = progress * audiolib.duration;
+        })
+
 
         //function for play song from songcard
         function PlaySongCard(songs) {
@@ -433,7 +506,7 @@
         })
 
         //listen play pause for song
-        socket.on("pausemusic", ()=>{
+        socket.on("pausemusic", () => {
             console.log('paused');
             PlayPause()
         })

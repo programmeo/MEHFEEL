@@ -53,10 +53,6 @@
     height: 35px;
 }
 
-.heart {
-    fill: white;
-}
-
 .play-container {
     background: var(--theme);
     width: 85vw;
@@ -98,6 +94,7 @@
     align-items: center;
     display: grid;
     position: relative;
+    width: 100%;
 }
 
 .seekbar .dot {
@@ -223,6 +220,14 @@
     .showlogo>img {
         width: 15vw;
         height: 10vh;
+    }
+
+    .search-inside {
+        display: none;
+    }
+
+    #search-input {
+        width: 50%;
     }
 
 }
