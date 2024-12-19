@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', (roomName) => {
         socket.join(roomName);
         console.log(`User joined room: ${roomName}`);
-        socket.to(roomName).emit('message', `${socket.handshake.query.name} has joined the room: ${roomName}`);
+        socket.to(roomName).emit('alert', `${socket.handshake.query.name} has joined the room: ${roomName}`);
     });
 
     // Broadcast to everyone in the room
@@ -39,20 +39,16 @@ io.on('connection', (socket) => {
 
     //send play emit to room
     socket.on('play', (song, roomName)=>{
-        console.log(song);//debug line
-        console.log(roomName);//debug line
         io.to(roomName).emit('playmusic', song)
     })
 
     //listen and brodcast play pause for user in room\
     socket.on('pause', (roomname)=>{
-        console.log("pause");//debug
         io.to(roomname).emit('pausemusic')
     })
 
     //addmusic to the room playlist
     socket.on('addmusic', (songs, roomname)=>{
-        console.log(songs);//debug
         socket.to(roomname).emit('addmusic', songs)
     })
 
