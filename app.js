@@ -174,6 +174,6 @@ app.get('/api/searchSongs', (req, res) => {
     }
 });
 
-server.listen(port, '192.168.1.7', () => {
-    console.log(`server listen at http://192.168.1.7:${port}`);
+server.listen(port, 'localhost', () => {
+    console.log(`server listen at http://localhost:${port}`);
 });
