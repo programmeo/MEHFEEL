@@ -436,7 +436,6 @@
 
         //incoming signal of seek postion from theserver
         socket.on('seekposition', (msg, progress)=>{
-            console.log(progress);
             dot.style.left = `${msg}px`
             // Update the audio current time based on the dot position
             audiolib.currentTime = progress * audiolib.duration;
@@ -545,11 +544,8 @@
         MusicSvg.addEventListener("click", () => {
             PlayList.classList.toggle('hidden');
             SearchSec.classList.add('hidden')
-            // console.log("Playlist clicked"); //debug line
         })
 
-
-        console.log('Script is running...');
 
     </script>
 </body>
