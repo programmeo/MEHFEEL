@@ -12,7 +12,7 @@
 1. **Clone the Repo**  
     Clone the repository to your local machine using:
     ```bash
-    git clone https://github.com/your-username/mehfeel.git
+    git clone https://github.com/programmeo/mehfeel.git
     ```
 
 2. **Install Dependencies 🛠️**  
